@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>3.28AI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .chat-container {
+      width: 500px;
+      margin: 0 auto;
+    }
+    .chat-box {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .chat-line {
+      margin: 5px 0;
+      line-height: 1.6;
+    }
+    .chat-line span.user {
+      font-weight: bold;
+      color: #3b5998;
+    }
+    .chat-line span.ai {
+      font-weight: bold;
+      color: #fa8231;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 8px;
+    }
+    .input-area button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .info {
+      color: #777;
+      text-align: center;
+      margin-top: 5px;
+    }
+    /* 让页面在移动端也能自适应 */
+    @media (max-width: 600px) {
+      .chat-container {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h2>3.28活动专属AI</h2>
+    <div class="chat-box" id="chatBox">
+      <!-- 聊天记录展示在这里 -->
+    </div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="请输入您的问题..." />
+      <button onclick="sendMessage()">发送</button>
+    </div>
+    <div class="info">
+      <span>当前聊天次数：<span id="chatCount">0</span> / <span id="maxChatCount">5</span></span>
+    </div>
+  </div>
+
+  <script>
+    // 请根据需要替换为你的实际 appId 和 API Key
+    const APP_ID = "79ec747ab2d04cfbb71b7472eb40137e";
+    const API_KEY = "sk-f61cdc228bfd4e25a5aa0467a5194cc6";
+    
+    // 百炼应用接口地址，使用 completion 接口
+    const ENDPOINT = `https://dashscope.aliyuncs.com/api/v1/apps/${APP_ID}/completion`;
+
+    // 聊天计数
+    let chatCount = 0;
+    const maxChatCount = 5; // 限制最大聊天次数
+    document.getElementById('maxChatCount').innerText = maxChatCount;
+
+    // 发送按钮点击事件
+    function sendMessage() {
+      // 如果已经达到最大聊天次数，直接返回
+      if (chatCount >= maxChatCount) {
+        alert("您已达到最大聊天次数限制，无法继续发送消息。");
+        return;
+      }
+
+      const userInput = document.getElementById('userInput');
+      const message = userInput.value.trim();
+      if (!message) {
+        alert("请输入内容后再发送");
+        return;
+      }
+
+      // 在聊天界面添加用户消息
+      addChatLine("你", message, "user");
+      userInput.value = "";  // 清空输入框
+
+      // 构造请求体（与官方文档一致）
+      const requestData = {
+        input: {
+          prompt: message
+        },
+        // 如果需要传更多参数，可在parameters或debug中添加
+        parameters: {}
+      };
+
+      // 调用百炼应用 API
+      fetch(ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // 根据官方HTTP文档，需使用 Bearer 方式传递API Key
+          "Authorization": `Bearer ${API_KEY}`
+          // 如果在子业务空间，请在此添加：
+          // "X-DashScope-Workspace": "子业务空间标识"
+        },
+        body: JSON.stringify(requestData)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`网络响应不成功，状态码：${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        chatCount++;
+        document.getElementById('chatCount').innerText = chatCount;
+
+        // 从返回结果中获取 AI 回复文本
+        if (data && data.output && data.output.text) {
+          const reply = data.output.text;
+          addChatLine("AI", reply, "ai");
+        } else {
+          addChatLine("AI", "（未获取到有效回复）", "ai");
+        }
+      })
+      .catch(error => {
+        console.error("调用失败：", error);
+        addChatLine("AI", "请求失败，请稍后重试。", "ai");
+      });
+    }
+
+    // 在对话框中显示一行消息
+    function addChatLine(sender, text, cssClass) {
+      const chatBox = document.getElementById('chatBox');
+      const line = document.createElement('div');
+      line.className = "chat-line";
+      line.innerHTML = `<span class="${cssClass}">${sender}:</span> ${escapeHtml(text)}`;
+      chatBox.appendChild(line);
+      // 保持滚动条在最底部
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // 转义HTML，防止特殊字符导致的潜在安全风险
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
