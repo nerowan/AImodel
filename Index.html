@@ -2,72 +2,168 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>3.28AI</title>
+  <title>神秘人</title>
   <style>
+    /* 公用样式 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
+
+    /* 标题区域 */
+    header {
+      text-align: center;
+      padding: 20px 0;
+      background-color: #ffffff88;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    header h2 {
+      font-size: 1.5rem;
+      margin-bottom: 5px;
+    }
+    header p {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    /* 聊天容器 */
     .chat-container {
-      width: 500px;
-      margin: 0 auto;
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
     }
+
     .chat-box {
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 300px;
+      width: 100%;
+      max-width: 600px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 聊天内容区域 */
+    .chat-content {
+      flex: 1;
+      padding: 20px;
       overflow-y: auto;
-      margin-bottom: 10px;
     }
     .chat-line {
-      margin: 5px 0;
-      line-height: 1.6;
+      margin-bottom: 15px;
+      display: flex;
+      width: 100%;
     }
-    .chat-line span.user {
+    /* 用户消息气泡 */
+    .bubble.user {
+      margin-left: auto;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 15px 15px 0 15px;
+    }
+    /* AI消息气泡 */
+    .bubble.ai {
+      margin-right: auto;
+      background-color: #f1f0f0;
+      color: #333;
+      border-radius: 15px 15px 15px 0;
+    }
+
+    .bubble {
+      max-width: 70%;
+      padding: 10px 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+    .sender-label {
       font-weight: bold;
-      color: #3b5998;
+      margin-bottom: 5px;
+      display: inline-block;
+      font-size: 0.9rem;
     }
-    .chat-line span.ai {
-      font-weight: bold;
-      color: #fa8231;
-    }
+
+    /* 输入区域 */
     .input-area {
       display: flex;
-      gap: 10px;
+      border-top: 1px solid #ddd;
+      background-color: #f9f9f9;
     }
     .input-area input {
       flex: 1;
-      padding: 8px;
+      padding: 15px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
     }
     .input-area button {
-      padding: 8px 16px;
+      padding: 15px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
       cursor: pointer;
+      font-size: 1rem;
+      outline: none;
     }
+    .input-area button:hover {
+      background-color: #0056b3;
+    }
+
+    /* 聊天次数信息 */
     .info {
-      color: #777;
+      font-size: 0.9rem;
+      color: #666;
       text-align: center;
-      margin-top: 5px;
+      margin: 5px 0;
     }
-    /* 让页面在移动端也能自适应 */
+
+    /* 移动端适配 */
     @media (max-width: 600px) {
-      .chat-container {
-        width: 90%;
+      header h2 {
+        font-size: 1.2rem;
+      }
+      .chat-box {
+        max-width: 95%;
+      }
+      .bubble {
+        max-width: 85%;
+      }
+      .input-area button {
+        font-size: 0.9rem;
       }
     }
+
   </style>
 </head>
 <body>
+  <header>
+    <h2>3.28之神秘人</h2>
+    <p>你敢和我对话吗</p>
+  </header>
+
   <div class="chat-container">
-    <h2>3.28活动专属AI</h2>
-    <div class="chat-box" id="chatBox">
-      <!-- 聊天记录展示在这里 -->
-    </div>
-    <div class="input-area">
-      <input type="text" id="userInput" placeholder="请输入您的问题..." />
-      <button onclick="sendMessage()">发送</button>
-    </div>
-    <div class="info">
-      <span>当前聊天次数：<span id="chatCount">0</span> / <span id="maxChatCount">5</span></span>
+    <div class="chat-box">
+      <div class="chat-content" id="chatBox">
+        <!-- 聊天记录展示在这里 -->
+      </div>
+      <div class="info">
+        当前聊天次数：<span id="chatCount">0</span> / <span id="maxChatCount">5</span>
+      </div>
+      <div class="input-area">
+        <input type="text" id="userInput" placeholder="请输入您的问题..." />
+        <button onclick="sendMessage()">发送</button>
+      </div>
     </div>
   </div>
 
@@ -76,7 +172,7 @@
     const APP_ID = "79ec747ab2d04cfbb71b7472eb40137e";
     const API_KEY = "sk-f61cdc228bfd4e25a5aa0467a5194cc6";
     
-    // 百炼应用接口地址，使用 completion 接口
+    // 百炼应用完成式API接口（/completion）
     const ENDPOINT = `https://dashscope.aliyuncs.com/api/v1/apps/${APP_ID}/completion`;
 
     // 聊天计数
@@ -99,16 +195,15 @@
         return;
       }
 
-      // 在聊天界面添加用户消息
-      addChatLine("你", message, "user");
+      // 展示用户输入的内容
+      addChatBubble("你", message, "user");
       userInput.value = "";  // 清空输入框
 
-      // 构造请求体（与官方文档一致）
+      // 构造请求数据
       const requestData = {
         input: {
           prompt: message
         },
-        // 如果需要传更多参数，可在parameters或debug中添加
         parameters: {}
       };
 
@@ -117,9 +212,9 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // 根据官方HTTP文档，需使用 Bearer 方式传递API Key
+          // Bearer 方式传递API Key
           "Authorization": `Bearer ${API_KEY}`
-          // 如果在子业务空间，请在此添加：
+          // 若在子业务空间，请在此添加:
           // "X-DashScope-Workspace": "子业务空间标识"
         },
         body: JSON.stringify(requestData)
@@ -137,24 +232,43 @@
         // 从返回结果中获取 AI 回复文本
         if (data && data.output && data.output.text) {
           const reply = data.output.text;
-          addChatLine("AI", reply, "ai");
+          addChatBubble("AI", reply, "ai");
         } else {
-          addChatLine("AI", "（未获取到有效回复）", "ai");
+          addChatBubble("AI", "（未获取到有效回复）", "ai");
         }
       })
       .catch(error => {
         console.error("调用失败：", error);
-        addChatLine("AI", "请求失败，请稍后重试。", "ai");
+        addChatBubble("AI", "请求失败，请稍后重试。", "ai");
       });
     }
 
-    // 在对话框中显示一行消息
-    function addChatLine(sender, text, cssClass) {
+    // 添加聊天消息气泡
+    function addChatBubble(sender, text, role) {
       const chatBox = document.getElementById('chatBox');
       const line = document.createElement('div');
-      line.className = "chat-line";
-      line.innerHTML = `<span class="${cssClass}">${sender}:</span> ${escapeHtml(text)}`;
+      line.classList.add('chat-line');
+
+      // sender-label + bubble
+      const bubble = document.createElement('div');
+      bubble.classList.add('bubble', role);
+
+      // 可选择是否显示sender标签
+      // 也可以只在AI一侧显示，比如:
+      // if (role === 'ai') { ... }
+      const senderSpan = document.createElement('span');
+      senderSpan.className = 'sender-label';
+      senderSpan.textContent = sender + ": ";
+      bubble.appendChild(senderSpan);
+
+      // 文本内容
+      const textNode = document.createElement('span');
+      textNode.innerHTML = escapeHtml(text);
+      bubble.appendChild(textNode);
+
+      line.appendChild(bubble);
       chatBox.appendChild(line);
+
       // 保持滚动条在最底部
       chatBox.scrollTop = chatBox.scrollHeight;
     }
